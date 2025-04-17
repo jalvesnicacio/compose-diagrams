@@ -4,7 +4,7 @@ Create system architectural diagrams from docker-compose files.
 In its current version, DAD is a **prototype**.
 Its goal is to design architecture diagrams of distributed systems from  docker-compose files.
 
-DAD reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.yalm` files and outputs a diagram `.png` image representing the Docker Compose file.
+DAD reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.yaml` files and outputs a diagram `.png` image representing the Docker Compose file.
   
 ```
   ┌────────────────────┐       ┌────────────────────┐
