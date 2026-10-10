@@ -6,7 +6,7 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_file
 from werkzeug.serving import make_server
 
-from . import DIRECTIONS, FORMATS, ComposeError, load, render_data
+from . import DIRECTIONS, FORMATS, STYLES, ComposeError, load, render_data
 
 STATIC = Path(__file__).parent / "static"
 
@@ -27,8 +27,9 @@ def create_app(initial_compose=""):
         body = request.get_json(silent=True) or {}
         outformat = body.get("format", "svg")
         direction = body.get("direction", "TB")
-        if outformat not in FORMATS or direction not in DIRECTIONS:
-            return jsonify(error="unsupported format or direction"), 400
+        style = body.get("style", "ad-hoc")
+        if outformat not in FORMATS or direction not in DIRECTIONS or style not in STYLES:
+            return jsonify(error="unsupported format, direction or style"), 400
         try:
             data = load(body.get("compose", ""))
         except ComposeError as e:
@@ -36,7 +37,7 @@ def create_app(initial_compose=""):
 
         with tempfile.TemporaryDirectory() as tmp:
             try:
-                image, _ = render_data(data, Path(tmp) / "diagram", outformat, direction)
+                image, _ = render_data(data, Path(tmp) / "diagram", outformat, direction, style)
             except Exception as e:
                 # the file parsed, but has a shape the diagram builder does not handle yet
                 return jsonify(error="could not draw this file: " + (str(e) or type(e).__name__)), 422

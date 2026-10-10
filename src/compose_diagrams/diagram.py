@@ -1,14 +1,17 @@
 from diagrams import Cluster, Diagram as DaC, Edge
 from .service import Service
 from diagrams.k8s.storage import Volume
+from diagrams.c4 import Database, Relationship, SystemBoundary
 
 # from diagrams import Cluster, Diagram, Edge
 # from diagrams.onprem.compute import Server
 
 
 class Diagram():
-    def __init__(self, title, services, volumes, networks):
+    def __init__(self, title, services, volumes, networks, name=None):
         self.__title = title
+        #name of the compose project, when the file declares one
+        self.__name = str(name) if name else "Docker Compose"
         self.__services = services
         self.__volumes = volumes
         self.__networks = networks
@@ -25,7 +28,9 @@ class Diagram():
                 return s
         return None
 
-    def design(self, diagram_filename, outformat="png", direction="TB"):
+    def design(self, diagram_filename, outformat="png", direction="TB", style="ad-hoc"):
+        if style == "c4":
+            return self.design_c4(diagram_filename, outformat, direction)
         #dac is the script for Diagram tool:
 
         dac = "from diagrams import Cluster, Diagram as DaC, Edge\nfrom service import Service\nfrom diagrams.k8s.storage import Volume\nfrom diagrams.onprem.compute import Server\n\n"
@@ -37,6 +42,39 @@ class Diagram():
             dac = dac + self.design_volumes()
         return dac
 
+
+    #C4 container diagram: services are containers (or databases) inside
+    #the system boundary; named volumes are databases the services store data in
+    def design_c4(self, diagram_filename, outformat, direction):
+        dac = "from diagrams import Diagram\nfrom diagrams.c4 import Container, Database, Relationship, SystemBoundary\n\n"
+        dac = dac + "with Diagram(" + repr(self.__name) + ", filename=\"./diagram-c4\", show=False, direction=\"" + direction + "\", graph_attr={\"splines\": \"spline\"}):" + '\n'
+        dac = dac + "    with SystemBoundary(" + repr(self.__name) + "):" + '\n'
+        with DaC(self.__name, filename= diagram_filename, outformat=outformat, show=False, direction=direction, graph_attr={"splines": "spline"}):
+            volume_nodes = {}
+            with SystemBoundary(self.__name):
+                for s in self.__services:
+                    dac = dac + s.design_c4()
+                for s in self.__services:
+                    for v in s.volumes:
+                        #bind mounts (host paths) are not part of the system
+                        if v in self.__volumes and v not in volume_nodes:
+                            volume_nodes[v] = Database(v, "Docker volume")
+                            dac = dac + "        " + self.volume_variable(v) + " = Database(" + repr(v) + ", \"Docker volume\")\n"
+            for dep in self.__dependencies:
+                self.service_by_name(dep[0]).node >> Relationship("depends on") >> self.service_by_name(dep[1]).node
+                dac = dac + "    " + self.service_by_name(dep[0]).variable + " >> Relationship(\"depends on\") >> " + self.service_by_name(dep[1]).variable + "\n"
+            for link in self.__links:
+                self.service_by_name(link[0]).node >> Relationship("links to") >> self.service_by_name(link[1]).node
+                dac = dac + "    " + self.service_by_name(link[0]).variable + " >> Relationship(\"links to\") >> " + self.service_by_name(link[1]).variable + "\n"
+            for s in self.__services:
+                for v in s.volumes:
+                    if v in volume_nodes:
+                        s.node >> Relationship("stores data in") >> volume_nodes[v]
+                        dac = dac + "    " + s.variable + " >> Relationship(\"stores data in\") >> " + self.volume_variable(v) + "\n"
+        return dac
+
+    def volume_variable(self, volume):
+        return "vol_" + "".join(c if c.isalnum() else "_" for c in volume)
 
     def map_dependencies(self):
         dependencies_list = []

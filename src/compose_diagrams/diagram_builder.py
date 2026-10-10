@@ -28,6 +28,7 @@ class DiagramBuilder():
                 .with_container_name()
                 .with_volumes()
                 .with_depends_on()
+                .with_ports()
                 .with_links()
                 .build()
             )
@@ -53,5 +54,6 @@ class DiagramBuilder():
             self.__title,
             self.__services,
             self.__volumes,
-            self.__networks
+            self.__networks,
+            self.__data.get('name')
         )

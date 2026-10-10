@@ -41,11 +41,23 @@ The command reads the Docker Compose file and writes `docker-compose.png` in the
 ```
 $ compose-diagrams docker-compose.yaml -o output/my-system.svg   # output path and format
 $ compose-diagrams docker-compose.yaml -d LR                     # left-to-right layout
+$ compose-diagrams docker-compose.yaml -s c4                     # C4 container diagram
 $ compose-diagrams docker-compose.yaml --script                  # also print the Diagram as Code script
 $ compose-diagrams --help
 ```
 
 Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in the `docker-compose-files` folder.
+
+## C4 style
+
+With `-s c4` (or the Style selector in the web interface), the diagram follows the [C4 model](https://c4model.com/) container view, using the [C4 nodes](https://diagrams.mingrammer.com/docs/nodes/c4) of Diagram as Code:
+
+- the Compose project is the system boundary (named after the file's `name`, when it has one);
+- each service is a container, labelled with its image (or build context) and published ports;
+- services running a known data store image (postgres, mysql, redis, mongo…) and named volumes are drawn as databases;
+- `depends_on`, `links` and volume usage become labelled relationships.
+
+Bind mounts (host paths) are left out of the C4 diagram.
 
 ## Web interface
 
@@ -53,7 +65,7 @@ Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in t
 $ compose-diagrams --web
 ```
 
-This starts a local web page at http://127.0.0.1:8000 and opens it in the browser. Type, paste or drop a Docker Compose file on the left and the diagram on the right follows your edits. From there you can change the layout direction and download the diagram as PNG, SVG or PDF. Press `Ctrl+C` in the terminal to stop it.
+This starts a local web page at http://127.0.0.1:8000 and opens it in the browser. Type, paste or drop a Docker Compose file on the left and the diagram on the right follows your edits. From there you can change the style and the layout direction, and download the diagram as PNG, SVG or PDF. Press `Ctrl+C` in the terminal to stop it.
 
 ```
 $ compose-diagrams docker-compose.yaml --web   # start with this file loaded

@@ -8,6 +8,7 @@ from .diagram_builder import DiagramBuilder
 
 FORMATS = ("png", "svg", "pdf", "jpg")
 DIRECTIONS = ("TB", "BT", "LR", "RL")
+STYLES = ("ad-hoc", "c4")
 
 
 class ComposeError(Exception):
@@ -25,10 +26,11 @@ def load(text):
     return data
 
 
-def render_data(data, output, outformat="png", direction="TB"):
+def render_data(data, output, outformat="png", direction="TB", style="ad-hoc"):
     """Render parsed docker-compose data as a diagram image.
 
-    `output` is the image path without extension. Returns the path of the
+    `output` is the image path without extension. `style` is "ad-hoc"
+    (icons) or "c4" (C4 container diagram). Returns the path of the
     generated image and the equivalent Diagram as Code script.
     """
     diagram = (
@@ -39,18 +41,18 @@ def render_data(data, output, outformat="png", direction="TB"):
         .with_networks()
         .build()
         )
-    script = diagram.design(str(output), outformat, direction)
+    script = diagram.design(str(output), outformat, direction, style)
     image = Path(str(output) + "." + outformat)
     if outformat == "svg":
         _embed_images(image)
     return image, script
 
 
-def render(compose_file, output, outformat="png", direction="TB"):
+def render(compose_file, output, outformat="png", direction="TB", style="ad-hoc"):
     """Render the docker-compose file as a diagram image (see render_data)."""
     with open(compose_file) as stream:
         data = load(stream)
-    return render_data(data, output, outformat, direction)
+    return render_data(data, output, outformat, direction, style)
 
 
 def _embed_images(svg_file):
