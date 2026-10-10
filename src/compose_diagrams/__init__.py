@@ -23,6 +23,9 @@ def load(text):
         raise ComposeError("invalid YAML: " + str(e))
     if not isinstance(data, dict) or not isinstance(data.get('services'), dict):
         raise ComposeError("no 'services' section found")
+    for service_name, service in data['services'].items():
+        if not isinstance(service, dict):
+            raise ComposeError(f"service {service_name!r} must be a mapping")
     return data
 
 
