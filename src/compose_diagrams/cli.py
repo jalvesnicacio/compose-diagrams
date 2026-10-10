@@ -3,7 +3,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import DIRECTIONS, FORMATS, ComposeError, render
+from . import DIRECTIONS, FORMATS, STYLES, ComposeError, render
 
 
 def build_parser():
@@ -23,6 +23,10 @@ def build_parser():
     parser.add_argument(
         "-d", "--direction", choices=DIRECTIONS, default="TB",
         help="layout direction (default: TB, top to bottom)",
+    )
+    parser.add_argument(
+        "-s", "--style", choices=STYLES, default="ad-hoc",
+        help="diagram style: ad-hoc (icons, the default) or c4 (C4 container diagram)",
     )
     parser.add_argument(
         "--script", action="store_true",
@@ -72,7 +76,7 @@ def main(argv=None):
         output.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        image, script = render(args.compose_file, output, outformat, args.direction)
+        image, script = render(args.compose_file, output, outformat, args.direction, args.style)
     except ComposeError as e:
         sys.exit("error: " + str(args.compose_file) + ": " + str(e))
 

@@ -143,6 +143,13 @@
     <input id="file" type="file" accept=".yaml,.yml,text/yaml" hidden>
   </div>
   <div class="group">
+    <label for="style">Style</label>
+    <select id="style">
+      <option value="ad-hoc">Ad-hoc</option>
+      <option value="c4">C4</option>
+    </select>
+  </div>
+  <div class="group">
     <label for="direction">Direction</label>
     <select id="direction">
       <option value="TB">Top to bottom</option>
@@ -195,6 +202,7 @@ volumes:
 
 const compose = document.getElementById("compose");
 const direction = document.getElementById("direction");
+const style = document.getElementById("style");
 const preview = document.getElementById("preview");
 const diagram = document.getElementById("diagram");
 const error = document.getElementById("error");
@@ -208,7 +216,7 @@ async function request(format, download) {
   const response = await fetch("/render", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({compose: compose.value, direction: direction.value, format, download}),
+    body: JSON.stringify({compose: compose.value, direction: direction.value, style: style.value, format, download}),
   });
   if (!response.ok) {
     let message = "the server returned an error (" + response.status + ")";
@@ -258,6 +266,7 @@ function setCompose(text) {
 
 compose.addEventListener("input", schedule);
 direction.addEventListener("change", update);
+style.addEventListener("change", update);
 
 compose.addEventListener("keydown", e => {
   if (e.key !== "Tab" || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;

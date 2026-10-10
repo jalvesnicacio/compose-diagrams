@@ -9,6 +9,7 @@ class ServiceBuilder():
         self.__volumes = []  #List of volumes
         self.__depends_on = [] #Service depends on other services
         self.__links = [] #List of links
+        self.__ports = [] #Published ports
 
     def with_image_name(self):
         dict = self.__dict
@@ -34,6 +35,20 @@ class ServiceBuilder():
                     self.__container_name = build.get('container_name')
             else:
                 self.__container_name = build
+        return self
+
+    def with_ports(self):
+        data_ports = self.__dict.get('ports')
+        if(data_ports is not None):
+            for p in data_ports:
+                if(isinstance(p, dict)):
+                    #long syntax: {target: 80, published: 8080}
+                    port = str(p.get('target'))
+                    if(p.get('published') is not None):
+                        port = str(p.get('published')) + ":" + port
+                else:
+                    port = str(p)
+                self.__ports.append(port)
         return self
 
     def with_links(self):
@@ -83,4 +98,17 @@ class ServiceBuilder():
             self.__container_name,
             self.__volumes,
             self.__depends_on,
-            self.__links)
+            self.__links,
+            self.image(),
+            self.build_context(),
+            self.__ports)
+
+    def image(self):
+        image = self.__dict.get('image')
+        return str(image) if image is not None else None
+
+    def build_context(self):
+        build = self.__dict.get('build')
+        if isinstance(build, dict):
+            build = build.get('context')
+        return str(build) if build is not None else None
