@@ -1,7 +1,8 @@
 myenv/
 .vscode/
 *.pyc
-output/*.png
+output/*
+!output/.gitkeep
 .DS_Store
 .venv/
 *.egg-info/

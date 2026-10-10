@@ -47,6 +47,22 @@ $ compose-diagrams --help
 
 Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in the `docker-compose-files` folder.
 
+## Web interface
+
+```
+$ compose-diagrams --web
+```
+
+This starts a local web page at http://127.0.0.1:8000 and opens it in the browser. Type, paste or drop a Docker Compose file on the left and the diagram on the right follows your edits. From there you can change the layout direction and download the diagram as PNG, SVG or PDF. Press `Ctrl+C` in the terminal to stop it.
+
+```
+$ compose-diagrams docker-compose.yaml --web   # start with this file loaded
+$ compose-diagrams --web --port 9000           # use another port
+$ compose-diagrams --web --no-browser          # do not open the browser
+```
+
+The page runs entirely on your machine: the Compose file is not sent anywhere else.
+
 ## Example
 
 ### Input
