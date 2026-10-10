@@ -16,9 +16,10 @@ class ServiceBuilder():
             self.__image_name = self.set_image_name(dict.get('image'))
         elif(dict.get('build') is not None):
             build = dict.get('build')
-            #print(dict.get('container_name'))
-            if(build.get('container_name') is not None):
-                self.__image_name = build.get('container_name')
+            # print(build)
+            if not isinstance(build,str):
+                if(build.get('container_name') is not None):
+                    self.__image_name = build.get('container_name')
             else:
                 self.__image_name = build
         return self
@@ -29,8 +30,11 @@ class ServiceBuilder():
             self.__container_name = dict.get('container_name')
         elif(dict.get('build') is not None):
             build = dict.get('build')
-            if(build.get('container_name') is not None):
-                self.__container_name = build.get('container_name')
+            if not isinstance(build, str):
+                if(build.get('container_name') is not None):
+                    self.__container_name = build.get('container_name')
+            else:
+                self.__container_name = build
         return self
 
     def with_links(self):

@@ -1,0 +1,201 @@
+version: '3.2'
+
+services:
+
+    web:
+        build:
+            context: ./web
+            dockerfile: docker/production/Dockerfile
+        depends_on:
+            - db
+            - cache
+        restart: always
+        environment:
+            DJANGO_SETTINGS_MODULE: config.settings.production
+            VIRTUAL_PORT: 8000
+            VIRTUAL_HOST: cualbondi.org,api.cualbondi.org,cualbondi.com.ar,api3.cualbondi.com.ar,api.cualbondi.com.ar,www.cualbondi.com.ar
+            LETSENCRYPT_HOST: cualbondi.org,api.cualbondi.org,cualbondi.com.ar,api3.cualbondi.com.ar,api.cualbondi.com.ar,www.cualbondi.com.ar
+            LETSENCRYPT_EMAIL: cualbondi@cualbondi.com.ar
+        env_file: .env
+        volumes:
+            - ./volume_web_media:/app/apps/media
+            - ./volume_web_static:/app/staticfiles
+        command: /uvicorn.sh
+
+    osm-static-maps:
+        build: ./osm-static-maps
+        restart: always
+        ports:
+            - 3000:3000
+        volumes:
+            - ./osm-static-maps:/app
+
+    web-buscador:
+        image: cypress/base:12.13.0
+        shm_size: 1g
+        cap_add:
+            - SYS_ADMIN
+        # command: tail -f /dev/null
+        command: bash -c "npm i && node_modules/.bin/vue-cli-service build"
+        user: root
+        working_dir: /src
+        volumes:
+            - "./web-buscador:/src"
+
+    notebooks:
+        build:
+            context: ./web
+            dockerfile: docker/notebooks/Dockerfile
+        depends_on:
+            - db
+            - cache
+        environment:
+            DJANGO_SETTINGS_MODULE: config.settings.production
+            VIRTUAL_PORT: 8000
+            VIRTUAL_HOST: notebooks.cualbondi.com.ar
+            LETSENCRYPT_HOST: notebooks.cualbondi.com.ar
+            LETSENCRYPT_EMAIL: cualbondi@cualbondi.com.ar
+        env_file: .env.notebooks
+        volumes:
+            - ./web/notebooks:/app/notebooks
+            - ./volume_notebooks_config.json:/home/django/.jupyter/jupyter_notebook_config.json
+        command: ["/notebooks.sh"]
+
+    db:
+        build: ./postgres
+        restart: always
+        env_file: .env
+        volumes:
+            - ./volume_db_12:/var/lib/postgresql/data
+        sysctls:
+            - kernel.shmmax=4294967296
+            - kernel.shmall=4194304
+            #- vm.nr_hugepages=6000 # not namespaced must be set outside docker
+        command: postgres -c shared_buffers=2GB -c work_mem=128MB -c statement_timeout=300000 -c max_parallel_workers_per_gather=16 -c max_worker_processes=32 -c max_connections=7000 -c shared_preload_libraries='pg_stat_statements'
+
+    cache:
+        image: memcached:alpine
+        restart: always
+
+
+    openmaptiles:
+        image: klokantech/openmaptiles-server
+        restart: always
+        volumes:
+            - ./volume_openmaptiles_data:/data
+        environment:
+            VIRTUAL_PORT: 80
+            VIRTUAL_HOST: tiles.cualbondi.org,tiles.cualbondi.com.ar
+            LETSENCRYPT_HOST: tiles.cualbondi.org,tiles.cualbondi.com.ar
+            LETSENCRYPT_EMAIL: cualbondi@cualbondi.com.ar
+
+
+    munin:
+        image: shaf/munin-server
+        volumes:
+            - ./volume_munin_rrd:/var/lib/munin
+            - ./volume_munin_conf:/etc/munin/munin-conf.d
+        environment:
+            HOSTNAME: cualbondi
+            VIRTUAL_PORT: 80
+            VIRTUAL_HOST: munin.cualbondi.com.ar
+            LETSENCRYPT_HOST: munin.cualbondi.com.ar
+            LETSENCRYPT_EMAIL: cualbondi@cualbondi.com.ar
+            ALLOWED_HOSTS: "0/0"
+
+
+    proxy:
+        image: jwilder/nginx-proxy:alpine
+        ports:
+            - 80:80
+            - 443:443
+        restart: always
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock
+            - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/conf.d:/etc/nginx/conf.d
+            - ./nginx/assetlinks.json:/usr/share/nginx/html/.well-known/assetlinks.json
+            - ./nginx/ads.txt:/usr/share/nginx/html/ads.txt
+            - ./volume_nginx/logs:/var/log/nginx
+            - ./volume_nginx/html:/usr/share/nginx/html
+            - ./volume_nginx/certificates:/etc/nginx/certs
+            - ./volume_web_static:/www/static
+            - ./volume_web_media:/www/media
+            - ./web-buscador/dist:/www/web-buscador_dist
+        labels:
+            - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+        environment:
+            DEFAULT_HOST: cualbondi.com.ar
+        sysctls:
+            - net.core.somaxconn=16384
+            - net.ipv4.tcp_synack_retries=2
+            - net.ipv4.tcp_syn_retries=2
+            - net.ipv4.tcp_fin_timeout=10
+            #- net.ipv4.tcp_slow_start_after_idle=0 # not found?
+            #- net.ipv4.tcp_mem=524288 524288 524288 # not found?
+            #- net.ipv4.tcp_max_tw_buckets=1048576 # not found?
+            #- net.ipv4.tcp_max_syn_backlog=4096 # not found?
+            - net.ipv4.tcp_tw_reuse=1
+            - net.ipv4.tcp_keepalive_intvl=15
+            - net.ipv4.tcp_keepalive_probes=5
+
+    # https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion
+    letsencrypt:
+        image: jrcs/letsencrypt-nginx-proxy-companion
+        restart: on-failure
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./volume_nginx/certificates:/etc/nginx/certs
+            - ./volume_nginx/vhost.d:/etc/nginx/vhost.d
+            - ./volume_nginx/html:/usr/share/nginx/html
+        # environment:
+        #     DEBUG: "true"
+
+
+
+
+
+####### SENTRY ###########
+
+    sentry_redis:
+        image: redis
+
+    sentry_postgres:
+        image: postgres:11
+        environment:
+            POSTGRES_USER: sentry
+            POSTGRES_PASSWORD: sentry
+            POSTGRES_DBNAME: sentry
+            POSTGRES_DBUSER: sentry
+            POSTGRES_DBPASS: sentry
+        volumes:
+            - ./volume_sentry_postgres:/var/lib/postgresql/data
+
+    sentry_sentry:
+        image: sentry
+        links:
+            - sentry_redis
+            - sentry_postgres
+        env_file: .env
+        environment:
+            LETSENCRYPT_HOST: sentry.cualbondi.com.ar
+            LETSENCRYPT_EMAIL: cualbondi@cualbondi.com.ar
+            VIRTUAL_HOST: sentry.cualbondi.com.ar
+            VIRTUAL_PORT: 9000
+
+    sentry_cron:
+        image: sentry
+        links:
+            - sentry_redis
+            - sentry_postgres
+        env_file: .env
+        command: "sentry run cron"
+
+    sentry_worker:
+        image: sentry
+        links:
+            - sentry_redis
+            - sentry_postgres
+        env_file: .env
+        command: "sentry run worker"
