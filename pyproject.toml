@@ -12,6 +12,7 @@ authors = [{ name = "Jalves Nicacio" }]
 dependencies = [
     "diagrams>=0.24",
     "PyYAML>=6",
+    "Flask>=3",
 ]
 
 [project.urls]
@@ -22,3 +23,6 @@ compose-diagrams = "compose_diagrams.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+compose_diagrams = ["static/*"]

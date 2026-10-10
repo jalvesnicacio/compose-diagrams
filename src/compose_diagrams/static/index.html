@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>compose-diagrams</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --text: #1f2933;
+    --muted: #65727f;
+    --border: #d5dae0;
+    --accent: #1d63ed;
+    --accent-text: #ffffff;
+    --error-bg: #fdecea;
+    --error-text: #a12622;
+    --editor-bg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15191e;
+      --panel: #1e242b;
+      --text: #e4e8ec;
+      --muted: #98a4b0;
+      --border: #333c46;
+      --accent: #4c8dff;
+      --accent-text: #0b1220;
+      --error-bg: #3b1d1c;
+      --error-text: #ffb4ae;
+      --editor-bg: #1a1f25;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  h1 { font-size: 16px; margin: 0 auto 0 0; font-weight: 600; }
+  .group { display: flex; align-items: center; gap: 6px; }
+  label { color: var(--muted); }
+  button, select {
+    font: inherit;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  button:hover, select:hover { border-color: var(--accent); }
+  button:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(280px, 2fr) 3fr;
+    gap: 12px;
+    padding: 12px 16px 16px;
+  }
+  section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 12px;
+    color: var(--muted);
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  textarea {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    border: 0;
+    padding: 12px;
+    background: var(--editor-bg);
+    color: var(--text);
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    tab-size: 2;
+    white-space: pre;
+  }
+  textarea.dragover { outline: 2px dashed var(--accent); outline-offset: -6px; }
+  #preview {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    background: #ffffff;
+  }
+  #preview img { margin: auto; cursor: zoom-in; }
+  #preview.fit img { max-width: 100%; max-height: 100%; }
+  #preview:not(.fit) img { cursor: zoom-out; }
+  #preview.stale img { opacity: 0.35; }
+  #error {
+    display: none;
+    margin: 0;
+    padding: 8px 12px;
+    background: var(--error-bg);
+    color: var(--error-text);
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap;
+    max-height: 30%;
+    overflow: auto;
+  }
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>compose-diagrams</h1>
+  <div class="group">
+    <button id="open" type="button">Open file…</button>
+    <input id="file" type="file" accept=".yaml,.yml,text/yaml" hidden>
+  </div>
+  <div class="group">
+    <label for="direction">Direction</label>
+    <select id="direction">
+      <option value="TB">Top to bottom</option>
+      <option value="BT">Bottom to top</option>
+      <option value="LR">Left to right</option>
+      <option value="RL">Right to left</option>
+    </select>
+  </div>
+  <div class="group">
+    <label>Download</label>
+    <button class="download primary" data-format="png" type="button">PNG</button>
+    <button class="download" data-format="svg" type="button">SVG</button>
+    <button class="download" data-format="pdf" type="button">PDF</button>
+  </div>
+</header>
+<main>
+  <section>
+    <div class="bar"><span>docker-compose.yaml</span><span>type, paste or drop a file</span></div>
+    <textarea id="compose" spellcheck="false" autocomplete="off" aria-label="docker-compose file"></textarea>
+  </section>
+  <section>
+    <div class="bar"><span>Diagram</span><span id="status" role="status"></span></div>
+    <div id="preview" class="fit"><img id="diagram" alt="Diagram of the docker-compose file" hidden></div>
+    <pre id="error" role="alert"></pre>
+  </section>
+</main>
+<script>
+const SAMPLE = `services:
+  web:
+    image: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+  api:
+    build: ./api
+    depends_on:
+      - db
+      - cache
+  db:
+    image: postgres:16
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  cache:
+    image: redis
+
+volumes:
+  db-data:
+`;
+
+const compose = document.getElementById("compose");
+const direction = document.getElementById("direction");
+const preview = document.getElementById("preview");
+const diagram = document.getElementById("diagram");
+const error = document.getElementById("error");
+const status = document.getElementById("status");
+const downloads = document.querySelectorAll(".download");
+
+let timer = null;
+let latest = 0;
+
+async function request(format, download) {
+  const response = await fetch("/render", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({compose: compose.value, direction: direction.value, format, download}),
+  });
+  if (!response.ok) {
+    let message = "the server returned an error (" + response.status + ")";
+    try { message = (await response.json()).error || message; } catch (e) {}
+    throw new Error(message);
+  }
+  return response.blob();
+}
+
+function showError(message) {
+  error.textContent = message;
+  error.style.display = "block";
+  preview.classList.add("stale");
+  downloads.forEach(b => b.disabled = true);
+  status.textContent = "not updated";
+}
+
+async function update() {
+  const ticket = ++latest;
+  status.textContent = "drawing…";
+  try {
+    const blob = await request("svg", false);
+    if (ticket !== latest) return;  // a newer edit is already on its way
+    const old = diagram.src;
+    diagram.src = URL.createObjectURL(blob);
+    diagram.hidden = false;
+    if (old) URL.revokeObjectURL(old);
+    error.style.display = "none";
+    preview.classList.remove("stale");
+    downloads.forEach(b => b.disabled = false);
+    status.textContent = "up to date";
+  } catch (e) {
+    if (ticket !== latest) return;
+    showError(e.message === "Failed to fetch" ? "compose-diagrams is not running any more. Start it again and reload this page." : e.message);
+  }
+}
+
+function schedule() {
+  clearTimeout(timer);
+  timer = setTimeout(update, 400);
+}
+
+function setCompose(text) {
+  compose.value = text;
+  update();
+}
+
+compose.addEventListener("input", schedule);
+direction.addEventListener("change", update);
+
+compose.addEventListener("keydown", e => {
+  if (e.key !== "Tab" || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
+  e.preventDefault();
+  compose.setRangeText("  ", compose.selectionStart, compose.selectionEnd, "end");
+  schedule();
+});
+
+document.getElementById("open").addEventListener("click", () => document.getElementById("file").click());
+document.getElementById("file").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (file) setCompose(await file.text());
+  e.target.value = "";
+});
+
+compose.addEventListener("dragover", e => { e.preventDefault(); compose.classList.add("dragover"); });
+compose.addEventListener("dragleave", () => compose.classList.remove("dragover"));
+compose.addEventListener("drop", async e => {
+  const file = e.dataTransfer.files[0];
+  compose.classList.remove("dragover");
+  if (!file) return;
+  e.preventDefault();
+  setCompose(await file.text());
+});
+
+diagram.addEventListener("click", () => preview.classList.toggle("fit"));
+
+downloads.forEach(button => button.addEventListener("click", async () => {
+  const format = button.dataset.format;
+  try {
+    const blob = await request(format, true);
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "diagram." + format;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  } catch (e) {
+    showError(e.message);
+  }
+}));
+
+fetch("/initial")
+  .then(r => r.json())
+  .then(d => setCompose(d.compose || SAMPLE))
+  .catch(() => setCompose(SAMPLE));
+</script>
+</body>
+</html>
