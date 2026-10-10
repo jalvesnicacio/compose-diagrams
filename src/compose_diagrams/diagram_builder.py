@@ -1,5 +1,5 @@
-from service_builder import ServiceBuilder
-from diagram import Diagram
+from .service_builder import ServiceBuilder
+from .diagram import Diagram
 
 class DiagramBuilder():
 

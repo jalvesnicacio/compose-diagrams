@@ -3,3 +3,5 @@ myenv/
 *.pyc
 output/*.png
 .DS_Store
+.venv/
+*.egg-info/

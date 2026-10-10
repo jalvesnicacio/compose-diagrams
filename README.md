@@ -1,15 +1,12 @@
-# DAD - Descriptor to Architectural Diagrams
-Create system architectural diagrams from docker-compose files.
+# compose-diagrams
+Create architecture diagrams of distributed systems from docker-compose files.
 
-In its current version, DAD is a **prototype**.
-Its goal is to design architecture diagrams of distributed systems from  docker-compose files.
-
-DAD reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.yaml` files and outputs a diagram `.png` image representing the Docker Compose file.
+`compose-diagrams` reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.yaml` files and outputs a diagram `.png` image representing the Docker Compose file.
   
 ```
   ┌────────────────────┐       ┌────────────────────┐
   │ Docker Compose     │       │ Diagram .png image │
-  │ .yalm file         │       │                    │
+  │ .yaml file         │       │                    │
   │────────────────────│       │            ┌───┐   │
   │ version: 'x.y'     │       │  ┌───┐ --- │   │   │
   │ services:          │  ══>  │  │   │     └───┘   │
@@ -22,28 +19,39 @@ DAD reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.y
 
 ## Setting up
 
-In order to run DAD, all following dependencies must be installed and running.
+compose-diagrams needs [Python 3](https://www.python.org/) >= 3.9 and [Graphviz](https://graphviz.org/download/) (the `dot` command) installed.
 
-- [Python 3](https://www.python.org/) >= 3.6;
-- [pip](https://pip.pypa.io/) >= 20;
-- [Diagram as Code](https://diagrams.mingrammer.com/);
-- [Graphviz](https://graphviz.gitlab.io/);
-- [PyYAML](https://pyyaml.org/).
+Then, from the project folder:
+```
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+$ pip install .
+```
+
+This also installs [Diagram as Code](https://diagrams.mingrammer.com/) and [PyYAML](https://pyyaml.org/).
 
 ## Running
 
-To run DAD, simply run the following command in a terminal window:
 ```
-$ python3 main.py
+$ compose-diagrams docker-compose.yaml
 ```
 
-DAD will read the `docker-compose-files` input folder, and output a `diagram.png` file in the output folder.
+The command reads the Docker Compose file and writes `docker-compose.png` in the current folder. Some options:
+
+```
+$ compose-diagrams docker-compose.yaml -o output/my-system.svg   # output path and format
+$ compose-diagrams docker-compose.yaml -d LR                     # left-to-right layout
+$ compose-diagrams docker-compose.yaml --script                  # also print the Diagram as Code script
+$ compose-diagrams --help
+```
+
+Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in the `docker-compose-files` folder.
 
 ## Example
 
 ### Input
 
-A Docker Compose `.yalm` file.
+A Docker Compose `.yaml` file.
 
 ```
 version: '3.8'
