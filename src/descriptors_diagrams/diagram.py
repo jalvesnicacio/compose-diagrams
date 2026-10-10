@@ -1,5 +1,5 @@
 from diagrams import Cluster, Diagram as DaC, Edge
-from service import Service
+from .service import Service
 from diagrams.k8s.storage import Volume
 
 # from diagrams import Cluster, Diagram, Edge
@@ -25,31 +25,35 @@ class Diagram():
                 return s
         return None
 
-    def design(self, diagram_filename):
+    def design(self, diagram_filename, outformat="png", direction="TB"):
         #dac is the script for Diagram tool:
 
         dac = "from diagrams import Cluster, Diagram as DaC, Edge\nfrom service import Service\nfrom diagrams.k8s.storage import Volume\nfrom diagrams.onprem.compute import Server\n\n"
-        dac = dac + "with DaC(\"" + self.__title + "\", filename= \"./diagram-adhoc\", show=False, direction=\"TB\"):" + '\n'
-        with DaC(self.__title, filename= diagram_filename, show=False, direction="TB"):
+        dac = dac + "with DaC(\"" + self.__title + "\", filename= \"./diagram-adhoc\", show=False, direction=\"" + direction + "\"):" + '\n'
+        with DaC(self.__title, filename= diagram_filename, outformat=outformat, show=False, direction=direction):
             for s in self.__services:
                 dac = dac + s.design()
             dac = dac + self.design_edges()
             dac = dac + self.design_volumes()
-            print(dac)
+        return dac
 
 
     def map_dependencies(self):
         dependencies_list = []
         for s in self.__services:
             for don in s.depends_on:
-                dependencies_list.append((s.service_name,don))
+                if self.service_by_name(don) is not None:
+                    dependencies_list.append((s.service_name,don))
         return dependencies_list
 
     def map_links(self):
         links_list = []
         for s in self.__services:
             for link in s.links:
-                links_list.append((s.service_name,link))
+                #links can be declared as "service:alias"
+                link = link.split(":")[0]
+                if self.service_by_name(link) is not None:
+                    links_list.append((s.service_name,link))
         return links_list
 
     #criando as ligações entre os serviços, dependendo da relação

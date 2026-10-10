@@ -1,4 +1,4 @@
-from service import Service
+from .service import Service
 
 class ServiceBuilder():
     def __init__(self, name, dict):
@@ -16,7 +16,6 @@ class ServiceBuilder():
             self.__image_name = self.set_image_name(dict.get('image'))
         elif(dict.get('build') is not None):
             build = dict.get('build')
-            # print(build)
             if not isinstance(build,str):
                 if(build.get('container_name') is not None):
                     self.__image_name = build.get('container_name')
@@ -77,10 +76,10 @@ class ServiceBuilder():
 
 
     def build(self):
-        # ... make something
+        # services without a recognizable image fall back to the service name
         return Service(
             self.__name,
-            self.__image_name,
+            self.__image_name or self.__name,
             self.__container_name,
             self.__volumes,
             self.__depends_on,

@@ -22,22 +22,33 @@ DAD reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.y
 
 ## Setting up
 
-In order to run DAD, all following dependencies must be installed and running.
+DAD needs [Python 3](https://www.python.org/) >= 3.9 and [Graphviz](https://graphviz.org/download/) (the `dot` command) installed.
 
-- [Python 3](https://www.python.org/) >= 3.6;
-- [pip](https://pip.pypa.io/) >= 20;
-- [Diagram as Code](https://diagrams.mingrammer.com/);
-- [Graphviz](https://graphviz.gitlab.io/);
-- [PyYAML](https://pyyaml.org/).
+Then, from the project folder:
+```
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+$ pip install .
+```
+
+This also installs [Diagram as Code](https://diagrams.mingrammer.com/) and [PyYAML](https://pyyaml.org/).
 
 ## Running
 
-To run DAD, simply run the following command in a terminal window:
 ```
-$ python3 main.py
+$ descriptors-diagrams docker-compose.yaml
 ```
 
-DAD will read the `docker-compose-files` input folder, and output a `diagram.png` file in the output folder.
+DAD reads the Docker Compose file and writes `docker-compose.png` in the current folder. Some options:
+
+```
+$ descriptors-diagrams docker-compose.yaml -o output/my-system.svg   # output path and format
+$ descriptors-diagrams docker-compose.yaml -d LR                     # left-to-right layout
+$ descriptors-diagrams docker-compose.yaml --script                  # also print the Diagram as Code script
+$ descriptors-diagrams --help
+```
+
+Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in the `docker-compose-files` folder.
 
 ## Example
 
