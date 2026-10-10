@@ -18,5 +18,5 @@ diagram = (
     )
 
 #Projetando o diagrama:
-diagram.design("./new-diagram")
+diagram.design("./output/diagram")
 #self.__diagram_filename =
