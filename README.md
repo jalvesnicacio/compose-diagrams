@@ -1,15 +1,12 @@
-# DAD - Descriptor to Architectural Diagrams
-Create system architectural diagrams from docker-compose files.
+# compose-diagrams
+Create architecture diagrams of distributed systems from docker-compose files.
 
-In its current version, DAD is a **prototype**.
-Its goal is to design architecture diagrams of distributed systems from  docker-compose files.
-
-DAD reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.yaml` files and outputs a diagram `.png` image representing the Docker Compose file.
+`compose-diagrams` reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.yaml` files and outputs a diagram `.png` image representing the Docker Compose file.
   
 ```
   ┌────────────────────┐       ┌────────────────────┐
   │ Docker Compose     │       │ Diagram .png image │
-  │ .yalm file         │       │                    │
+  │ .yaml file         │       │                    │
   │────────────────────│       │            ┌───┐   │
   │ version: 'x.y'     │       │  ┌───┐ --- │   │   │
   │ services:          │  ══>  │  │   │     └───┘   │
@@ -22,7 +19,7 @@ DAD reads multi-container [Docker Compose](https://docs.docker.com/compose/) `.y
 
 ## Setting up
 
-DAD needs [Python 3](https://www.python.org/) >= 3.9 and [Graphviz](https://graphviz.org/download/) (the `dot` command) installed.
+compose-diagrams needs [Python 3](https://www.python.org/) >= 3.9 and [Graphviz](https://graphviz.org/download/) (the `dot` command) installed.
 
 Then, from the project folder:
 ```
@@ -36,16 +33,16 @@ This also installs [Diagram as Code](https://diagrams.mingrammer.com/) and [PyYA
 ## Running
 
 ```
-$ descriptors-diagrams docker-compose.yaml
+$ compose-diagrams docker-compose.yaml
 ```
 
-DAD reads the Docker Compose file and writes `docker-compose.png` in the current folder. Some options:
+The command reads the Docker Compose file and writes `docker-compose.png` in the current folder. Some options:
 
 ```
-$ descriptors-diagrams docker-compose.yaml -o output/my-system.svg   # output path and format
-$ descriptors-diagrams docker-compose.yaml -d LR                     # left-to-right layout
-$ descriptors-diagrams docker-compose.yaml --script                  # also print the Diagram as Code script
-$ descriptors-diagrams --help
+$ compose-diagrams docker-compose.yaml -o output/my-system.svg   # output path and format
+$ compose-diagrams docker-compose.yaml -d LR                     # left-to-right layout
+$ compose-diagrams docker-compose.yaml --script                  # also print the Diagram as Code script
+$ compose-diagrams --help
 ```
 
 Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in the `docker-compose-files` folder.
@@ -54,7 +51,7 @@ Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in t
 
 ### Input
 
-A Docker Compose `.yalm` file.
+A Docker Compose `.yaml` file.
 
 ```
 version: '3.8'

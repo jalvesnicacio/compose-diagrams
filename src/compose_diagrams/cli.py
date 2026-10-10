@@ -8,7 +8,7 @@ from . import DIRECTIONS, FORMATS, ComposeError, render
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        prog="descriptors-diagrams",
+        prog="compose-diagrams",
         description="Create an architecture diagram from a docker-compose file.",
     )
     parser.add_argument("compose_file", type=Path, help="path to the docker-compose YAML file")

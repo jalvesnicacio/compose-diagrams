@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "descriptors-diagrams"
+name = "compose-diagrams"
 version = "0.2.0"
 description = "Create system architectural diagrams from docker-compose files."
 readme = "README.md"
@@ -15,10 +15,10 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/jalvesnicacio/descriptors-diagrams"
+Repository = "https://github.com/jalvesnicacio/compose-diagrams"
 
 [project.scripts]
-descriptors-diagrams = "descriptors_diagrams.cli:main"
+compose-diagrams = "compose_diagrams.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
