@@ -120,16 +120,19 @@ class Diagram():
         services_volumes = []
         dashed_edge = Edge(color="darkgreen", style="dashed")
         dac_vol = ""
+        volume_nodes = {}
         for s in self.__services:
             for v in s.volumes:
                 #vol = v.split(":")
                 services_volumes.append((s.service_name,v))
         for sv in services_volumes:
-             vol = Volume(sv[1])
-             vol >> dashed_edge << self.service_by_name(sv[0]).node
+             if sv[1] not in volume_nodes:
+                 volume_nodes[sv[1]] = Volume(sv[1])
 
-             #Generate script Diagram As Code:
-             vol_name = "vol_" + self.service_by_name(sv[0]).image_name
-             dac_vol = dac_vol + "    " + vol_name + " = Volume(\"" + sv[1] + "\")\n"
+                 #Generate script Diagram As Code:
+                 vol_name = self.volume_variable(sv[1])
+                 dac_vol = dac_vol + "    " + vol_name + " = Volume(\"" + sv[1] + "\")\n"
+             vol_name = self.volume_variable(sv[1])
+             volume_nodes[sv[1]] >> dashed_edge << self.service_by_name(sv[0]).node
              dac_vol = dac_vol + "    " + vol_name + " >> " + "Edge(color=\"darkgreen\", style=\"dashed\")" + " << " + self.service_by_name(sv[0]).image_name + "\n"
         return dac_vol
