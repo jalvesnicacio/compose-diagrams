@@ -38,6 +38,10 @@ def build_parser():
         help="open the web interface in the browser (with compose_file loaded, if given)",
     )
     web.add_argument("--port", type=int, default=8000, help="port of the web interface (default: 8000)")
+    web.add_argument(
+        "--host", default="127.0.0.1",
+        help="address the web interface listens on (default: 127.0.0.1, this machine only)",
+    )
     web.add_argument("--no-browser", action="store_true", help="do not open the browser automatically")
     return parser
 
@@ -58,7 +62,7 @@ def main(argv=None):
         from .web import serve
         initial = args.compose_file.read_text() if args.compose_file else ""
         try:
-            serve(port=args.port, initial_compose=initial, open_browser=not args.no_browser)
+            serve(host=args.host, port=args.port, initial_compose=initial, open_browser=not args.no_browser)
         except OSError as e:
             sys.exit("error: could not start on port " + str(args.port) + " (" + str(e) + "). "
                      "Try another one with --port.")

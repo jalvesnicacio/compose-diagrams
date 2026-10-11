@@ -60,7 +60,8 @@ _MIMETYPES = {
 
 def serve(host="127.0.0.1", port=8000, initial_compose="", open_browser=True):
     server = make_server(host, port, create_app(initial_compose), threaded=True)
-    url = "http://" + host + ":" + str(port)
+    # 0.0.0.0 (all interfaces, as used inside a container) is not an address to visit
+    url = "http://" + ("localhost" if host == "0.0.0.0" else host) + ":" + str(port)
     print("compose-diagrams is running at " + url + " (Ctrl+C to stop)")
     if open_browser:
         threading.Timer(0.5, webbrowser.open, args=(url,)).start()
