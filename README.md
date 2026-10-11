@@ -48,6 +48,29 @@ $ compose-diagrams --help
 
 Supported formats are `png`, `svg`, `pdf` and `jpg`. Sample input files are in the `docker-compose-files` folder.
 
+## Docker
+
+With Docker, there is no need to install Python or Graphviz. Build the image from the project folder:
+
+```
+$ docker build -t compose-diagrams .
+```
+
+Start the web interface and open http://localhost:8000:
+
+```
+$ docker run --rm -p 8000:8000 compose-diagrams
+```
+
+Or use the command line, mounting the folder that holds your Compose file as `/work`:
+
+```
+$ docker run --rm -v "$PWD":/work compose-diagrams docker-compose.yaml -o diagram.png
+$ docker run --rm -v "$PWD":/work compose-diagrams docker-compose.yaml -s c4 -o diagram.svg
+```
+
+The diagram is written to the same folder. On Linux, add `--user "$(id -u):$(id -g)"` so the file belongs to you rather than to root.
+
 ## C4 style
 
 With `-s c4` (or the Style selector in the web interface), the diagram follows the [C4 model](https://c4model.com/) container view, using the [C4 nodes](https://diagrams.mingrammer.com/docs/nodes/c4) of Diagram as Code:
@@ -71,6 +94,7 @@ This starts a local web page at http://127.0.0.1:8000 and opens it in the browse
 $ compose-diagrams docker-compose.yaml --web   # start with this file loaded
 $ compose-diagrams --web --port 9000           # use another port
 $ compose-diagrams --web --no-browser          # do not open the browser
+$ compose-diagrams --web --host 0.0.0.0        # accept connections from other machines
 ```
 
 The page runs entirely on your machine: the Compose file is not sent anywhere else.
